@@ -13,16 +13,17 @@ namespace BenchmarkProject.String
     [AllStatisticsColumn]
     [GroupBenchmarksBy(BenchmarkDotNet.Configs.BenchmarkLogicalGroupRule.ByParams)]
     [RankColumn]
+    [BaselineColumn]
     [BenchmarkClass]
-    public class StringComparisonBenchmarks
+    public class StringStartsWithBenchmarks
     {
         private List<string> _dataList { get; set; }
-        private int _dataListSize { get; set; }
 
-        [Params(1000, 10_000, 100_000)]
+        [Params(10_000)]
         public int _listLength { get; set; }
 
         private string _compareText { get; set; }
+        private ReadOnlySpan<char> _compareTextSpan => _compareText.AsSpan();
 
         [GlobalSetup]
         public void Setup()
@@ -42,49 +43,36 @@ namespace BenchmarkProject.String
 
             Console.WriteLine($"Setup Finished with {_listLength}");
 
-            _dataListSize = _dataList.Sum(item => item.Length);
-            Console.WriteLine($"Setup DataListSize: {_dataListSize}");
-
             _compareText = allowedChars.Substring(0, rnd.Next(allowedChars.Length));
         }
 
-        //[Benchmark(Baseline = true)]
-        [Benchmark]
-        public bool CompareByOperator()
+        [Arguments("http://www.google.com")]
+        [Benchmark(Baseline = true)]
+        public bool StartsWith()
         {
             for (int i = 0; i < _dataList.Count; i++)
             {
-                if (_dataList[i] == _compareText) return true;
+                if (_dataList[i].StartsWith(_compareText)) return true;
             }
             return false;
         }
 
         [Benchmark]
-        public bool CompareByOperatorWithCase()
+        public bool StartsWithSpanBoth()
         {
             for (int i = 0; i < _dataList.Count; i++)
             {
-                if (_dataList[i].ToLower() == _compareText.ToLower()) return true;
+                if (_dataList[i].AsSpan().StartsWith(_compareText.AsSpan())) return true;
             }
             return false;
         }
 
         [Benchmark]
-        public bool CompareByEquals()
+        public bool StartsWithSpanList()
         {
             for (int i = 0; i < _dataList.Count; i++)
             {
-                if (_dataList[i].Equals(_compareText)) return true;
-            }
-            return false;
-        }
-
-        [Benchmark]
-        public bool CompareByEqualsWithIgnoreCase()
-        {
-            for (int i = 0; i < _dataList.Count; i++)
-            {
-                if (_dataList[i].Equals(_compareText, StringComparison.InvariantCultureIgnoreCase)) return true;
+                if (_dataList[i].AsSpan().StartsWith(_compareTextSpan)) return true;
             }
             return false;
         }
