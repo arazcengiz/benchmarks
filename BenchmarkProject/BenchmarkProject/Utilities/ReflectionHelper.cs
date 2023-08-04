@@ -1,15 +1,20 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
-namespace BenchmarkProject.Utilities;
-public static class ReflectionHelper
+namespace BenchmarkProject.Utilities
 {
-    public static Dictionary<string, Type> GetBenchmarkAssemblies()
+    public static class ReflectionHelper
     {
-        var assemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
-        var benchmarkClasses = assemblyTypes.Where(item => item.GetCustomAttribute<BenchmarkClassAttribute>() != null).ToList();
+        public static Dictionary<string, Type> GetBenchmarkAssemblies()
+        {
+            var assemblyTypes = Assembly.GetExecutingAssembly().GetTypes();
+            var benchmarkClasses = assemblyTypes.Where(item => item.GetCustomAttribute<BenchmarkClassAttribute>() != null).ToList();
 
-        Dictionary<string, Type> result = new Dictionary<string, Type>();
-        benchmarkClasses.ForEach(item => result.Add(item.Name, item));
-        return result;
+            Dictionary<string, Type> result = new Dictionary<string, Type>();
+            benchmarkClasses.ForEach(item => result.Add(item.Name, item));
+            return result;
+        }
     }
 }
