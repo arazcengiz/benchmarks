@@ -1,79 +1,88 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkProject.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace BenchmarkProject.Linq;
-
-[MemoryDiagnoser]
-[Orderer(BenchmarkDotNet.Order.SummaryOrderPolicy.FastestToSlowest)]
-//[BenchmarkDotNet.Attributes.MinColumn]
-[AllStatisticsColumn]
-[GroupBenchmarksBy(BenchmarkDotNet.Configs.BenchmarkLogicalGroupRule.ByParams)]
-[RankColumn]
-[BenchmarkClass]
-public class LinqSumBenchmarks
+namespace BenchmarkProject.Linq
 {
-    private List<string> _dataList { get; set; }
-    private string[] _dataArray { get; set; }
-    private Span<string> _dataSpan => _dataArray;
-
-    [Params(1000, 10_000, 100_000, 1_000_000)]
-    public int _listLength { get; set; }
-
-    [GlobalSetup]
-    public void Setup()
+    [MemoryDiagnoser]
+    [Orderer(BenchmarkDotNet.Order.SummaryOrderPolicy.FastestToSlowest)]
+    //[BenchmarkDotNet.Attributes.MinColumn]
+    //[AllStatisticsColumn]
+    [GroupBenchmarksBy(BenchmarkDotNet.Configs.BenchmarkLogicalGroupRule.ByParams)]
+    [RankColumn]
+    [BaselineColumn]
+    [BenchmarkClass]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net48, baseline:true)]
+    //[SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.NetCoreApp30)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net60)]
+    [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net70)]
+    public class LinqSumBenchmarks
     {
-        Console.WriteLine($"Setup Started with {_listLength}");
+        private List<string> _dataList { get; set; }
+        private string[] _dataArray { get; set; }
+        private Span<string> _dataSpan => _dataArray;
 
-        var rndStringLength = new Random();
-        const string allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@$?_-";
+        [Params(10000)]
+        public int _listLength { get; set; }
 
-        _dataList = new List<string>();
-        for (int i = 0; i < _listLength; i++)
+        [GlobalSetup]
+        public void Setup()
         {
-            int stringLength = rndStringLength.Next(allowedChars.Length);
-            string subStr = allowedChars.Substring(0, stringLength);
-            _dataList.Add(subStr);
+            Console.WriteLine($"Setup Started with {_listLength}");
+
+            var rndStringLength = new Random();
+            const string allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@$?_-";
+
+            _dataList = new List<string>();
+            for (int i = 0; i < _listLength; i++)
+            {
+                int stringLength = rndStringLength.Next(allowedChars.Length);
+                string subStr = allowedChars.Substring(0, stringLength);
+                _dataList.Add(subStr);
+            }
+
+            _dataArray = _dataList.ToArray();
+
+            Console.WriteLine($"Setup Finished with {_listLength}");
         }
 
-        _dataArray = _dataList.ToArray();
-
-        Console.WriteLine($"Setup Finished with {_listLength}");
-    }
-
-    //[Benchmark(Baseline = true)]
-    [Benchmark]
-    public int ListSelectThenSum()
-    {
-        return _dataList.Select(item => item.Length).Sum();
-    }
-
-    [Benchmark]
-    public int ListSum()
-    {
-        return _dataList.Sum(item => item.Length);
-    }
-
-    [Benchmark]
-    public int ArraySelectThenSum()
-    {
-        return _dataArray.Select(item => item.Length).Sum();
-    }
-
-    [Benchmark]
-    public int ArraySum()
-    {
-        return _dataArray.Sum(item => item.Length);
-    }
-
-    [Benchmark]
-    public int SpanForLoopAddition()
-    {
-        int sum = 0;
-        for (int i = 0; i < _dataSpan.Length; i++)
+        //[Benchmark(Baseline = true)]
+        [Benchmark]
+        public int ListSelectThenSum()
         {
-            sum += _dataSpan[i].Length;
+            return _dataList.Select(item => item.Length).Sum();
         }
-        return sum;
+
+        [Benchmark]
+        public int ListSum()
+        {
+            return _dataList.Sum(item => item.Length);
+        }
+
+        [Benchmark]
+        public int ArraySelectThenSum()
+        {
+            return _dataArray.Select(item => item.Length).Sum();
+        }
+
+        [Benchmark]
+        public int ArraySum()
+        {
+            return _dataArray.Sum(item => item.Length);
+        }
+
+        [Benchmark]
+        public int SpanForLoopAddition()
+        {
+            int sum = 0;
+            for (int i = 0; i < _dataSpan.Length; i++)
+            {
+                sum += _dataSpan[i].Length;
+            }
+            return sum;
+        }
     }
 }
